@@ -37,6 +37,7 @@ namespace AllReady
 
         public IServiceProvider ConfigureServices(IServiceCollection services)
         {
+            string PasswordPattern = @"[^\x00-\x7F]+";
             //Add CORS support.
             // Must be first to avoid OPTIONS issues when calling from Angular/Browser
             services.AddCors(options =>
@@ -52,9 +53,15 @@ namespace AllReady
             services.AddIdentity<ApplicationUser, IdentityRole>(options =>
                 {
                     options.Password.RequiredLength = 10;
-                    options.Password.RequireNonAlphanumeric = false;
                     options.Password.RequireDigit = true;
-                    options.Password.RequireUppercase = false;
+                    options.Password.RequireLowercase = true;
+                    foreach (Match match in Regex.Matches(Password, PasswordPattern, RegexOptions.IgnoreCase))
+                    {
+                        errors.Add(new IdentityError
+                        {
+                            Description = "Password accepts only English digits"
+                        });
+                    }
                     options.Lockout.MaxFailedAccessAttempts = Convert.ToInt32(Configuration["Authentication:MaxFailedAccessAttempts"]);
                 })
                 .AddEntityFrameworkStores<AllReadyContext>()
